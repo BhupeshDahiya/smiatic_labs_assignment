@@ -1,0 +1,75 @@
+pipeline {
+
+    agent any
+
+    environment {
+        DOCKER_CREDS   = credentials('docker-creds') 
+        DOCKERHUB_REPO = "username/reponame"
+        IMAGE_TAG      = "${env.BUILD_NUMBER}"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm ci'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh 'npm test'
+            }
+        }
+
+        stage('Build Application') {
+            steps {
+                sh 'npm run build'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh "docker build -t ${DOCKERHUB_REPO}:${IMAGE_TAG} ."
+            }
+        }
+
+        stage('Trivy Scan') {
+            steps {
+                sh "trivy image --exit-code 1 --severity HIGH,CRITICAL ${DOCKERHUB_REPO}:${IMAGE_TAG}"
+            }
+        }
+
+        stage('Push Image') {
+            steps {
+                sh "echo \$DOCKER_CREDS_PSW | docker login -u \$DOCKER_CREDS_USR --password-stdin"
+                sh "docker push ${DOCKERHUB_REPO}:${IMAGE_TAG}"
+            }
+        }
+
+        stage('Helm Lint') {
+            steps {
+                sh "helm lint helm/node-api"
+            }
+        }
+
+        stage('Deploy to EKS') {
+            steps {
+                withAWS(credentials: 'aws-credentials-id', region: 'us-east-1') {
+                    sh 'aws eks update-kubeconfig --name my-eks-cluster'
+                    sh "helm upgrade --install node-api helm/node-api --set image.repository=${DOCKERHUB_REPO} --set image.tag=${IMAGE_TAG}"
+            }
+        }
+    }
+    post {
+        always {
+            sh "docker logout"
+        }
+    }
+}
