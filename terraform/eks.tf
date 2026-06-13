@@ -1,5 +1,5 @@
 resource "aws_eks_cluster" "argocd_sandbox" {
-  name = "example"
+  name = "argocd_sandbox"
 
   access_config {
     authentication_mode = "API"
@@ -9,11 +9,7 @@ resource "aws_eks_cluster" "argocd_sandbox" {
   version  = "1.35"
 
   vpc_config {
-    subnet_ids = [
-      aws_subnet.az1.id,
-      aws_subnet.az2.id,
-      aws_subnet.az3.id,
-    ]
+    subnet_ids = data.aws_subnets.default.ids
   }
 
   # Ensure that IAM Role permissions are created before and deleted
@@ -24,8 +20,8 @@ resource "aws_eks_cluster" "argocd_sandbox" {
   ]
 }
 
-resource "aws_iam_role" "cluster" {
-  name = "eks-cluster-example"
+resource "aws_iam_role" "eks_role" {
+  name = "argocd_sandbox"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
