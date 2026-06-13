@@ -1,1 +1,45 @@
 node_modules/
+# Local .terraform directories
+**/.terraform/*
+.terraform/
+
+# state files (CRITICAL: Never commit these. using remote S3 state anyway)
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# Terraform Plan Files
+*.tfplan
+*.plan
+tfplan
+
+*.tfvars
+*.tfvars.json
+*auto.tfvars
+_override.tf
+_override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Local CLI configuration files
+.terraformrc
+terraform.rc
+
+# Keys & Certificates
+*.pem
+*.key
+*.pub
+
+# OS & IDE Files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# --- Kubernetes Local Contexts & Tokens ---
+.kube/
+kubeconfig
+*kubeconfig
+*.kubeconfig
+.helm/
